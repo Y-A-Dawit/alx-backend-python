@@ -14,10 +14,10 @@ def stream_users_in_batches(batch_size):
     for row in cursor:
         batch.append(row)
         if len(batch) == batch_size:
-            yield batch
+            yield batch  # yield here, NOT return
             batch = []
     if batch:
-        yield batch
+        yield batch  # yield remaining batch
 
     cursor.close()
     connection.close()
