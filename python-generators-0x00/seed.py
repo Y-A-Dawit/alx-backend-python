@@ -3,7 +3,7 @@ import csv
 
 def connect_db():
     try:
-        return mysql.connector.connect(user='root', password='your_password', host='localhost')
+        return mysql.connector.connect(user='root', password='Schadenfreude2190@$', host='localhost')
     except mysql.connector.Error as err:
         print(f"Error: {err}")
         return None
