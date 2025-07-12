@@ -1,6 +1,5 @@
 import asyncio
 import aiosqlite
-
 # Async function to fetch all users
 async def async_fetch_users():
     async with aiosqlite.connect("users.db") as db:
