@@ -30,7 +30,21 @@ class TestAccessNestedMap(unittest.TestCase):
             access_nested_map(nested_map, path)
         self.assertEqual(str(cm.exception), f"'{path[-1]}'")
 
+    @parameterized.expand([
+    ({"a": 1}, ("a", "b")),
+    ({}, ("a",)),
+    ])
+    def test_access_nested_map_exception(self, nested_map, path):
+        """Test KeyError is raised when path is invalid in nested map."""
+    
+        with self.assertRaises(KeyError) as cm:
+            access_nested_map(nested_map, path)
+        self.assertEqual(str(cm.exception), repr(path[-1]))
+
+
 class TestGetJson(unittest.TestCase):
+
+
     @parameterized.expand([
         ("http://example.com", {"payload": True}),
         ("http://holberton.io", {"payload": False}),
@@ -41,10 +55,15 @@ class TestGetJson(unittest.TestCase):
 
         with patch("utils.requests.get", return_value=mock_response) as mock_get:
             result = get_json(test_url)
-            mock_get.assert_called_once_with(test_url)
+            mock_get.assert_called_once_with(
+                test_url
+                )
             self.assertEqual(result, test_payload)
 
+
 class TestMemoize(unittest.TestCase):
+
+
     def test_memoize(self):
         class TestClass:
             def a_method(self):
