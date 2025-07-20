@@ -20,7 +20,7 @@ class TestGithubOrgClient(unittest.TestCase):
     ])
     @patch('client.get_json')  # patch get_json in the client module
     def test_org(self, org_name, mock_get_json):
-        """Test GithubOrgClient.org returns the correct value."""
+        """Test GithubOrgClient.org returns the expected data."""
         # Setup mock return value
         expected = {"login": org_name}
         mock_get_json.return_value = expected
@@ -31,14 +31,13 @@ class TestGithubOrgClient(unittest.TestCase):
 
         # Assert that get_json was called once with the right URL
         mock_get_json.assert_called_once_with(f"https://api.github.com/orgs/{org_name}")
-
         # Assert the org property returns the mock data
         self.assertEqual(result, expected)
 
     @patch('utils.get_json')
-    def test_public_repos_url(self):
+    def test_public_repos_url(self, mock_get_json):
         """Test GithubOrgClient._public_repos_url returns correct repos_url from org property."""
-        with patch.object(GithubOrgClient, 'org', new_callable=unittest.mock.PropertyMock) as mock_org:
+        with patch.object(GithubOrgClient, 'org', new_callable=unittest.PropertyMock) as mock_org:
             # Setup the mock to return a dict with repos_url
             mock_org.return_value = {"repos_url": "https://api.github.com/orgs/google/repos"}
 
