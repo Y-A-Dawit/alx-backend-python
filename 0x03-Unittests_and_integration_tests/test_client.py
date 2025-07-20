@@ -12,6 +12,7 @@ from parameterized import parameterized, parameterized_class
 from client import GithubOrgClient  # adjust import if needed
 from fixtures import TEST_PAYLOAD
 
+
 class TestGithubOrgClient(unittest.TestCase):
     """Test GithubOrgClient class."""
 
@@ -140,7 +141,7 @@ class TestGithubOrgClient(unittest.TestCase):
             mock_resp = Mock()
             if url == f"https://api.github.com/orgs/test_org":
                 mock_resp.json.return_value = cls.org_payload
-            elif url == cls.org_payload["repos_url"]:
+            elif url == cls.org_payload.get("repos_url"):
                 mock_resp.json.return_value = cls.repos_payload
             else:
                 mock_resp.json.return_value = None
@@ -161,4 +162,6 @@ class TestGithubOrgClient(unittest.TestCase):
     def test_public_repos_with_license(self):
         """Test public_repos filters repos by license"""
         client = GithubOrgClient("test_org")
-        self.assertEqual(client.public_repos(license="apache-2.0"), self.apache2_repos)
+        self.assertEqual(
+            client.public_repos(license="apache-2.0"),
+            self.apache2_repos)
