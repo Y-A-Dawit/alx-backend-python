@@ -55,7 +55,6 @@ class TestGithubOrgClient(unittest.TestCase):
             self.assertEqual(result, expected)
 
     @patch('client.get_json')
-
     def test_public_repos(self, mock_get_json):
         """
         Test GithubOrgClient.public_repos returns list of repo names.
