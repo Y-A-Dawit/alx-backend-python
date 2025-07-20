@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+"""
+Test suite for the GithubOrgClient class methods.
+"""
+
+
 import unittest
 from unittest.mock import patch, PropertyMock
 from parameterized import parameterized
@@ -30,6 +35,7 @@ class TestGithubOrgClient(unittest.TestCase):
         # Assert the org property returns the mock data
         self.assertEqual(result, expected)
 
+    @patch('utils.get_json')
     def test_public_repos_url(self):
         """Test GithubOrgClient._public_repos_url returns correct repos_url from org property."""
         with patch.object(GithubOrgClient, 'org', new_callable=unittest.mock.PropertyMock) as mock_org:
@@ -41,7 +47,7 @@ class TestGithubOrgClient(unittest.TestCase):
             expected = "https://api.github.com/orgs/google/repos"
 
             self.assertEqual(result, expected)
-    
+    @patch('utils.get_json')
     def test_public_repos(self, mock_get_json):
         """Test GithubOrgClient.public_repos returns list of repo names correctly."""
         
