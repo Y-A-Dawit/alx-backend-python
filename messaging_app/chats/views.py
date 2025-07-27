@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from .models import Conversation, Message, User
 from .serializers import ConversationSerializer, MessageSerializer
 from rest_framework.decorators import action
+from .permissions import IsOwner
 
 # Create your views here.
 class ConversationViewSet(viewsets.ModelViewSet):
@@ -62,6 +63,10 @@ class ConversationViewSet(viewsets.ModelViewSet):
     serializer_class = ConversationSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['participants__username', 'participants__email']
+    permission_classes = [IsOwner]
+
+    def get_queryset(self):
+        return Conversation.objects.filter(owner=self.request.user)
 
     def create(self, request, *args, **kwargs):
         participant_ids = request.data.get('participants', [])
