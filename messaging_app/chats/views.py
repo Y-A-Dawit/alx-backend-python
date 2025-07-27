@@ -1,6 +1,7 @@
 # chats/views.py
 
 from django.shortcuts import render
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, status, filters
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -10,6 +11,8 @@ from rest_framework.exceptions import PermissionDenied
 from .models import Conversation, Message, User
 from .serializers import ConversationSerializer, MessageSerializer
 from .permissions import IsOwner, IsParticipantOfConversation
+from .pagination import MessagePagination
+from .filters import MessageFilter
 
 
 #  Conversation ViewSet
@@ -42,7 +45,9 @@ class ConversationViewSet(viewsets.ModelViewSet):
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
-    filter_backends = [filters.SearchFilter]
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    filterset_class = MessageFilter
+    pagination_class = MessagePagination
     search_fields = ['conversation__conversation_id', 'sender__user_id']
     permission_classes = [IsAuthenticated, IsParticipantOfConversation]  # ✅ updated here
 
