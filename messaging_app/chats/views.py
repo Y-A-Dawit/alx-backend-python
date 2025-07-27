@@ -2,23 +2,26 @@
 
 from django.shortcuts import render
 from rest_framework import viewsets, status, filters
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.decorators import action
+from rest_framework.exceptions import PermissionDenied
+
 from .models import Conversation, Message, User
 from .serializers import ConversationSerializer, MessageSerializer
-from rest_framework.decorators import action
 from .permissions import IsOwner, IsParticipantOfConversation
 
 
-# ✅ Conversation ViewSet
+#  Conversation ViewSet
 class ConversationViewSet(viewsets.ModelViewSet):
     queryset = Conversation.objects.all()
     serializer_class = ConversationSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['participants__username', 'participants__email']
-    permission_classes = [IsParticipantOfConversation]  # 🔐 Task 1
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]  # 🔐 Task 1
 
     def get_queryset(self):
-        # ✅ Return conversations where user is a participant
+        #  Return conversations where user is a participant
         return Conversation.objects.filter(participants=self.request.user)
 
     def create(self, request, *args, **kwargs):
@@ -35,16 +38,16 @@ class ConversationViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
-# ✅ Message ViewSet
+#  Message ViewSet
 class MessageViewSet(viewsets.ModelViewSet):
     queryset = Message.objects.all()
     serializer_class = MessageSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['conversation__conversation_id', 'sender__user_id']
-    permission_classes = [IsOwner]  # 🔐 Task 0
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]  # ✅ updated here
 
     def get_queryset(self):
-        # ✅ Return only messages sent by the user (IsOwner ensures access to own)
+        # Return only messages sent by the user
         return Message.objects.filter(sender=self.request.user)
 
     def create(self, request, *args, **kwargs):
@@ -67,6 +70,12 @@ class MessageViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+        if request.user not in conversation.participants.all():
+            return Response(
+                {"error": "You are not a participant of this conversation."},
+                status=status.HTTP_403_FORBIDDEN  # ✅ needed for the check
+            )
+
         message = Message.objects.create(
             conversation=conversation,
             sender=sender,
@@ -75,3 +84,4 @@ class MessageViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(message)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    

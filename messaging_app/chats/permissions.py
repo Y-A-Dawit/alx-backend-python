@@ -1,7 +1,8 @@
 # messaging_app/chats/permissions.py
 
-from rest_framework.permissions import BasePermission
-from rest_framework import permissions
+from rest_framework.permissions import BasePermission, IsAuthenticated
+from rest_framework import permissions, status
+from rest_framework.exceptions import PermissionDenied
 
 class IsOwner(permissions.BasePermission):
     """
@@ -17,6 +18,7 @@ class IsParticipantOfConversation(permissions.BasePermission):
     Custom permission:
     - Allow only authenticated users
     - Allow only participants of a conversation to access it
+    - For message updates/deletes, ensure user is the sender
     """
 
     def has_permission(self, request, view):
@@ -28,5 +30,18 @@ class IsParticipantOfConversation(permissions.BasePermission):
         Assumes the `Conversation` model has a ManyToMany field like:
         participants = models.ManyToManyField(User)
         """
-        # Allow access only if the user is a participant
-        return request.user in obj.participants.all()
+
+        user = request.user
+        
+         # If the object is a Conversation
+        if hasattr(obj, 'participants'):
+            return user in obj.participants.all()
+
+        # If the object is a Message
+        if hasattr(obj, 'conversation') and hasattr(obj, 'sender'):
+            is_participant = user in obj.conversation.participants.all()
+            if request.method in ["PUT", "PATCH", "DELETE"]:
+                return is_participant and obj.sender == user
+            return is_participant
+
+        return False
