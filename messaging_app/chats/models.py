@@ -6,8 +6,6 @@ from django.contrib.auth.models import AbstractUser
 # Create your models here.
 
 class User(AbstractUser):
-    user_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15, blank=True, null=True)
 
     ROLE_CHOICES = [
@@ -15,15 +13,7 @@ class User(AbstractUser):
         ('host', 'Host'),
         ('admin', 'Admin'),
     ]
-    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    # Password already inherited from AbstractUser as 'password'
-    USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
-
-    def __str__(self):
-        return f"{self.email} ({self.role})"
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES, default='guest')
 
 
 class Conversation(models.Model):
