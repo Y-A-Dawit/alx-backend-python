@@ -11,3 +11,22 @@ class IsOwner(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         # Assumes 'owner' field on the object points to request.user
         return obj.owner == request.user
+
+class IsParticipantOfConversation(permissions.BasePermission):
+    """
+    Custom permission:
+    - Allow only authenticated users
+    - Allow only participants of a conversation to access it
+    """
+
+    def has_permission(self, request, view):
+        # Must be authenticated
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        """
+        Assumes the `Conversation` model has a ManyToMany field like:
+        participants = models.ManyToManyField(User)
+        """
+        # Allow access only if the user is a participant
+        return request.user in obj.participants.all()
