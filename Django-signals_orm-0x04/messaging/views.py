@@ -29,12 +29,13 @@ def user_messages_with_replies(request):
     Retrieve top-level messages (no parent) for the user
     and include replies in a threaded format.
     """
-    # ✅ Use select_related + prefetch_related
+    #Use select_related + prefetch_related
     messages = Message.objects.filter(
         sender=request.user,
         parent_message__isnull=True
     ).select_related('sender', 'receiver')\
-     .prefetch_related('replies')
+     .prefetch_related('replies')\
+     .only('id', 'sender__username', 'receiver__username', 'content', 'timestamp')
 
     def recursive_replies(message):
         return [
