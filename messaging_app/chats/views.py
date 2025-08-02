@@ -21,24 +21,17 @@ class ConversationViewSet(viewsets.ModelViewSet):
     serializer_class = ConversationSerializer
     filter_backends = [filters.SearchFilter]
     search_fields = ['participants__username', 'participants__email']
-    permission_classes = [IsAuthenticated, IsParticipantOfConversation]  # 🔐 Task 1
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]  #Task 1
 
     def get_queryset(self):
         #  Return conversations where user is a participant
         return Conversation.objects.filter(participants=self.request.user)
 
     def create(self, request, *args, **kwargs):
-        participant_ids = request.data.get('participants', [])
-        if len(participant_ids) < 2:
-            return Response(
-                {"error": "A conversation must have at least two participants."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-        conversation = Conversation.objects.create()
-        conversation.participants.set(User.objects.filter(user_id__in=participant_ids))
-        serializer = self.get_serializer(conversation)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        serializer = self.get_serializer(data=request.data)   # Create serializer with request data
+        serializer.is_valid(raise_exception=True)             # Validate the data (raises 400 if invalid)
+        self.perform_create(serializer)                       # Calls serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)  # Return created object
 
 
 #  Message ViewSet
@@ -49,7 +42,7 @@ class MessageViewSet(viewsets.ModelViewSet):
     filterset_class = MessageFilter
     pagination_class = MessagePagination
     search_fields = ['conversation__conversation_id', 'sender__user_id']
-    permission_classes = [IsAuthenticated, IsParticipantOfConversation]  # ✅ updated here
+    permission_classes = [IsAuthenticated, IsParticipantOfConversation]  #updated here
 
     def get_queryset(self):
         # Return only messages sent by the user
@@ -78,7 +71,7 @@ class MessageViewSet(viewsets.ModelViewSet):
         if request.user not in conversation.participants.all():
             return Response(
                 {"error": "You are not a participant of this conversation."},
-                status=status.HTTP_403_FORBIDDEN  # ✅ needed for the check
+                status=status.HTTP_403_FORBIDDEN  #needed for the check
             )
 
         message = Message.objects.create(

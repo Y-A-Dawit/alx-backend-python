@@ -30,13 +30,27 @@ class MessageSerializer(serializers.ModelSerializer):
 
 class ConversationSerializer(serializers.ModelSerializer):
     participants = UserSerializer(many=True, read_only=True)
+    participant_usernames = serializers.ListField(
+        child=serializers.CharField(), write_only=True
+    )
     messages = MessageSerializer(many=True, read_only=True, source='message_set')
 
     class Meta:
         model = Conversation
-        fields = ['conversation_id', 'participants', 'messages', 'created_at']
+        fields = ['conversation_id', 'participants', 'participant_usernames', 'messages', 'created_at']
 
     def validate(self, data):
-        if 'participants' in data and len(data['participants']) < 2:
-            raise serializers.ValidationError("A conversation must have at least two participants.")
+        if 'participant_usernames' in data and len(data['participant_usernames']) < 2:
+            raise serializers.ValidationError("At least two valid users are required.")
         return data
+    
+    def create(self, validated_data):
+        usernames = validated_data.pop('participant_usernames')
+        users = User.objects.filter(username__in=usernames)
+
+        if users.count() < 2:
+            raise serializers.ValidationError("At least two valid users are required.")
+        
+        conversation = Conversation.objects.create()
+        conversation.participants.set(users)
+        return conversation
