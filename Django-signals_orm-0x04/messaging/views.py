@@ -1,6 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
@@ -14,6 +14,12 @@ def delete_user(request):
     logout(request)  # Log user out before deleting
     user.delete()    # Triggers post_delete signal
     return redirect('/')  # Redirect to home page after deletion
+
+def unread_inbox_view(request):
+    unread_messages = Message.unread.for_user(request.user)
+    return render(request, 'messaging/unread_inbox.html', {
+        'unread_messages': unread_messages
+    })
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])

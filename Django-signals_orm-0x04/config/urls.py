@@ -17,9 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 from messaging.views import delete_user
+from messaging import views as messaging_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('delete-account/', delete_user, name='delete_account'),
     path('api/', include('messagingurls')),
+    path('unread/', messaging_views.unread_inbox_view, name='unread-inbox'),
 ]
