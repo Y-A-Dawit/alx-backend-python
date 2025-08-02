@@ -8,6 +8,8 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Message
 from .serializers import MessageSerializer
 from django.contrib.auth.models import User
+from django.views.decorators.cache import cache_page
+
 
 @login_required
 def delete_user(request):
@@ -24,6 +26,7 @@ def unread_inbox_view(request):
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
+@cache_page(60)
 def user_messages_with_replies(request):
     """
     Retrieve top-level messages (no parent) for the user

@@ -22,6 +22,6 @@ from messaging import views as messaging_views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('delete-account/', delete_user, name='delete_account'),
-    path('api/', include('messagingurls')),
+    path('api/', include('messaging.urls')),
     path('unread/', messaging_views.unread_inbox_view, name='unread-inbox'),
 ]
