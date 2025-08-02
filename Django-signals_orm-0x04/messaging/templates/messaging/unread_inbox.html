@@ -1,8 +1,7 @@
-<h2>Unread Messages</h2>
+<!-- messaging/templates/messaging/unread_inbox.html -->
+<h1>Unread Messages</h1>
 <ul>
-  {% for msg in unread_messages %}
-    <li><strong>{{ msg.sender }}</strong>: {{ msg.content }} ({{ msg.timestamp }})</li>
-  {% empty %}
-    <li>No unread messages</li>
+  {% for message in unread_messages %}
+    <li><strong>{{ message.sender }}</strong>: {{ message.content }}</li>
   {% endfor %}
 </ul>
