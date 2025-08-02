@@ -1,6 +1,7 @@
 # chats/middleware.py
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.http import HttpResponseForbidden
+from collections import defaultdict
 
 class RequestLoggingMiddleware:
     def __init__(self, get_response):
@@ -33,3 +34,36 @@ class RestrictAccessByTimeMiddleware:
 
         response = self.get_response(request)
         return response
+
+class OffensiveLanguageMiddleware:
+    def __init__(self, get_response):
+        self.get_response = get_response
+        # Store timestamps of POSTs per IP
+        self.message_log = defaultdict(list)
+
+    def __call__(self, request):
+        # Only track chat POSTs
+        if request.method == 'POST' and request.path.startswith('/chats'):
+            ip = self.get_client_ip(request)
+            now = datetime.now()
+
+            # Remove messages older than 1 minute
+            self.message_log[ip] = [
+                ts for ts in self.message_log[ip]
+                if now - ts < timedelta(minutes=1)
+            ]
+
+            if len(self.message_log[ip]) >= 5:
+                return HttpResponseForbidden("Too many messages. Try again in a minute.")
+
+            self.message_log[ip].append(now)
+
+        response = self.get_response(request)
+        return response
+
+    def get_client_ip(self, request):
+        # Handle reverse proxies
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            return x_forwarded_for.split(',')[0]
+        return request.META.get('REMOTE_ADDR')
