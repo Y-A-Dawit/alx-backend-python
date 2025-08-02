@@ -52,7 +52,7 @@ MIDDLEWARE = [
     'chats.middleware.RequestLoggingMiddleware',
 ]
 
-ROOT_URLCONF = 'messaging_app.urls'
+ROOT_URLCONF = 'Django_Middleware_0x03.urls'
 
 TEMPLATES = [
     {
@@ -69,7 +69,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'messaging_app.wsgi.application'
+WSGI_APPLICATION = 'Django_Middleware_0x03.wsgi.application'
 
 
 # Database
@@ -135,4 +135,3 @@ REST_FRAMEWORK = {
 }
 
 AUTH_USER_MODEL = 'chats.User'
-
