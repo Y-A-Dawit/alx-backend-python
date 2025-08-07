@@ -1,25 +1,24 @@
-# Use the official Python image
+# Dockerfile
+
+# Use an official Python runtime as a parent image
 FROM python:3.10-slim
 
 # Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
 
-# Set work directory
+# Set working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y netcat-openbsd gcc postgresql-client libpq-dev
-
-# Install Python dependencies
+# Install dependencies
 COPY requirements.txt .
-RUN pip install --upgrade pip && pip install -r requirements.txt
+RUN pip install -r requirements.txt
 
-# Copy project files
+# Copy the project
 COPY . .
 
-# Expose port
+# 🔥 Expose the default Django port
 EXPOSE 8000
 
-# Start Django server
+# Run the server
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
