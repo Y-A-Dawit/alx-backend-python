@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: messaging_db
+      MYSQL_USER: messaging_user
+      MYSQL_PASSWORD: your_password
+    volumes:
+      - db_data:/var/lib/mysql
+
+  web:
+    build: .
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_NAME: messaging_db
+      DB_USER: messaging_user
+      DB_PASSWORD: your_password
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "/wait-for-db.sh &&
+              python manage.py migrate &&
+              python manage.py runserver 0.0.0.0:8000
+      "
+    volumes:
+      - .:/app
+
+volumes:
+  db_data:
