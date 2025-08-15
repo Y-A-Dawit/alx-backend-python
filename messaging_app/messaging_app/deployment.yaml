@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
       - name: messaging-app-container
-        image: yohannes4life/messaging_app:latest
-        imagePullPolicy: Always
+        image: messaging_app:latest
+        imagePullPolicy: Never
         ports:
         - containerPort: 8000
         env:

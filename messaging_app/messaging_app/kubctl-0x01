@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# Step 1: Scale the Django app deployment to 3 replicas
+echo "Scaling Django app to 3 replicas..."
+kubectl scale deployment django-app --replicas=3
+
+# Step 2: Verify multiple pods are running
+echo "Checking running pods..."
+kubectl get pods -l app=django-app
+
+# Step 3: Load testing using wrk
+# Replace <DJANGO_SERVICE_URL> with your service's actual URL or Cluster IP + Port
+echo "Running load test with wrk..."
+wrk -t2 -c100 -d30s http://<DJANGO_SERVICE_URL>/
+
+# Step 4: Monitor resource usage
+echo "Monitoring resource usage..."
+kubectl top pods
