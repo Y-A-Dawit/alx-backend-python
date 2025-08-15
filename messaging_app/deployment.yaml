@@ -16,7 +16,8 @@ spec:
     spec:
       containers:
       - name: messaging-app-container
-        image: your-dockerhub-username/messaging_app:latest
+        image: yohannes4life/messaging_app:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 8000
         env:
