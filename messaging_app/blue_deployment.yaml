@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: messaging-app-container
-        image: messaging_app:latest  # your Docker image for the current version
+        image: messaging_app:2.0   # updated version
         ports:
         - containerPort: 8000
         env:

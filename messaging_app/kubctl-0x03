@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Apply the updated deployment
+kubectl apply -f blue_deployment.yaml
+
+# Monitor the rollout progress
+kubectl rollout status deployment/messaging-app-blue
+
+# Test for downtime by sending continuous requests
+echo "Testing app availability..."
+for i in {1..10}; do
+    curl -s http://<service-ip-or-minikube-url>:80/
+    sleep 1
+done
+
+# List current pods to verify the update
+kubectl get pods
