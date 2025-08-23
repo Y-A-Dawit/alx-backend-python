@@ -1,10 +1,13 @@
 pipeline {
-    agent any
-    environment {
-        VENV_DIR = "${WORKSPACE}/venv"
+    agent {
+        docker {
+            image 'python:3.11-slim'   // official Python image
+            args '-u root:root'        // run as root inside container
+        }
     }
+
     stages {
-        stage('Checkout SCM') {
+        stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/Y-A-Dawit/alx-backend-python.git', credentialsId: 'github-creds'
             }
@@ -12,17 +15,20 @@ pipeline {
 
         stage('Install System Dependencies') {
             steps {
-                sh 'apt-get update && apt-get install -y gcc g++ make pkg-config libmariadb-dev libmariadb-dev-compat'
+                sh '''
+                    apt-get update
+                    apt-get install -y gcc g++ make pkg-config libmariadb-dev libmariadb-dev-compat
+                '''
             }
         }
 
         stage('Setup Python Environment') {
             steps {
                 sh '''
-                python3 -m venv $VENV_DIR
-                source $VENV_DIR/bin/activate
-                pip install --upgrade pip
-                pip install -r messaging_app/requirements.txt
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install --upgrade pip
+                    pip install -r messaging_app/requirements.txt
                 '''
             }
         }
@@ -30,8 +36,8 @@ pipeline {
         stage('Run Tests') {
             steps {
                 sh '''
-                source $VENV_DIR/bin/activate
-                pytest --junitxml=report.xml
+                    . venv/bin/activate
+                    pytest --junitxml=report.xml
                 '''
             }
             post {
@@ -39,11 +45,6 @@ pipeline {
                     junit 'report.xml'
                 }
             }
-        }
-    }
-    post {
-        always {
-            echo 'Pipeline finished'
         }
     }
 }
