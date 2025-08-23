@@ -1,12 +1,14 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.11-slim'   // official Python image
-            args '-u root:root'        // run as root inside container
-        }
-    }
+    agent any
 
     stages {
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("messaging-app:latest", ".")
+                }
+            }
+        }
         stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/Y-A-Dawit/alx-backend-python.git', credentialsId: 'github-creds'
