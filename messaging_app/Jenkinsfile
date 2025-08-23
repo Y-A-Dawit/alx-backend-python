@@ -27,41 +27,23 @@ pipeline {
       }
     }
 
-    stage('Set up Python & deps') {
+    stage('Install dependencies') {
       steps {
-        dir('messaging_app') {
-          // Use ShiningPanda-managed Python and an auto-created virtualenv
-          withPythonEnv('Python 3.11') {
-            sh '''
-              python --version
-              python -m pip install --upgrade pip
-              # Install your app deps if a requirements file exists
-              if [ -f requirements.txt ]; then
-                pip install -r requirements.txt
-              fi
-              # Ensure test toolchain is present
-              pip install pytest pytest-cov coverage
-            '''
-          }
-        }
-      }
+                dir('messaging_app') {
+                    sh 'python3.11 -m venv venv'
+                    sh './venv/bin/pip install --upgrade pip'
+                    sh './venv/bin/pip install -r requirements.txt'
+                }
+            }
+
     }
 
     stage('Run tests') {
       steps {
-        dir('messaging_app') {
-          withPythonEnv('Python 3.11') {
-            sh '''
-              mkdir -p reports/junit reports/coverage_html
-              # Run pytest, produce JUnit XML + coverage XML/HTML
-              pytest -q --maxfail=1 --disable-warnings \
-                --junitxml=reports/junit/pytest.xml \
-                --cov=. --cov-report=xml:reports/coverage.xml \
-                --cov-report=html:reports/coverage_html
-            '''
-          }
-        }
-      }
+                dir('messaging_app') {
+                    sh './venv/bin/pytest --maxfail=1 --disable-warnings -q --junitxml=test-results.xml'
+                }
+            }
       post {
         always {
           // Publish test report; visible under "Test Result"
