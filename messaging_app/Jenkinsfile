@@ -6,9 +6,10 @@ pipeline {
     stages {
         stage('Checkout SCM') {
             steps {
-                git url: 'https://github.com/Y-A-Dawit/alx-backend-python.git', credentialsId: 'github-creds'
+                git branch: 'main', url: 'https://github.com/Y-A-Dawit/alx-backend-python.git', credentialsId: 'github-creds'
             }
         }
+
 
         stage('Install System Dependencies') {
             steps {
