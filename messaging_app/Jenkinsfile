@@ -1,0 +1,78 @@
+pipeline {
+  agent any
+
+  options {
+    timestamps()
+    ansiColor('xterm')
+  }
+
+  environment {
+    // Make pip quieter & faster between runs
+    PIP_DISABLE_PIP_VERSION_CHECK = '1'
+    PIP_CACHE_DIR = "${WORKSPACE}/.pip-cache"
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        // Clone the alx-backend-python repo using your GitHub credentials
+        checkout([
+          $class: 'GitSCM',
+          branches: [[name: '*/main']], // change if your default branch is different
+          userRemoteConfigs: [[
+            url: 'https://github.com/Y-A-Dawit/alx-backend-python.git',
+            credentialsId: 'github-creds'
+          ]]
+        ])
+      }
+    }
+
+    stage('Set up Python & deps') {
+      steps {
+        dir('messaging_app') {
+          // Use ShiningPanda-managed Python and an auto-created virtualenv
+          withPythonEnv('Python 3.11') {
+            sh '''
+              python --version
+              python -m pip install --upgrade pip
+              # Install your app deps if a requirements file exists
+              if [ -f requirements.txt ]; then
+                pip install -r requirements.txt
+              fi
+              # Ensure test toolchain is present
+              pip install pytest pytest-cov coverage
+            '''
+          }
+        }
+      }
+    }
+
+    stage('Run tests') {
+      steps {
+        dir('messaging_app') {
+          withPythonEnv('Python 3.11') {
+            sh '''
+              mkdir -p reports/junit reports/coverage_html
+              # Run pytest, produce JUnit XML + coverage XML/HTML
+              pytest -q --maxfail=1 --disable-warnings \
+                --junitxml=reports/junit/pytest.xml \
+                --cov=. --cov-report=xml:reports/coverage.xml \
+                --cov-report=html:reports/coverage_html
+            '''
+          }
+        }
+      }
+      post {
+        always {
+          // Publish test report; visible under "Test Result"
+          junit 'messaging_app/reports/junit/pytest.xml'
+          // Keep reports as build artifacts
+          archiveArtifacts artifacts: 'messaging_app/reports/**', fingerprint: true
+        }
+      }
+    }
+  }
+
+  // No triggers configured -> you trigger manually via "Build Now"
+  triggers { }
+}
