@@ -11,9 +11,19 @@ pipeline {
         }
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/Y-A-Dawit/alx-backend-python.git', credentialsId: 'github-creds'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [],
+                    userRemoteConfigs: [[
+                        url: 'https://github.com/Y-A-Dawit/alx-backend-python.git',
+                        credentialsId: 'github-creds'
+                    ]]
+                ])
             }
         }
+
 
         stage('Install System Dependencies') {
             steps {
