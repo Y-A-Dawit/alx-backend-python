@@ -1,57 +1,55 @@
 pipeline {
-  agent any
-
-  options {
-    timestamps()
-    ansiColor('xterm')
-  }
-
-  environment {
-    // Make pip quieter & faster between runs
-    PIP_DISABLE_PIP_VERSION_CHECK = '1'
-    PIP_CACHE_DIR = "${WORKSPACE}/.pip-cache"
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        // Clone the alx-backend-python repo using your GitHub credentials
-        checkout([
-          $class: 'GitSCM',
-          branches: [[name: '*/main']], // change if your default branch is different
-          userRemoteConfigs: [[
-            url: 'https://github.com/Y-A-Dawit/alx-backend-python.git',
-            credentialsId: 'github-creds'
-          ]]
-        ])
-      }
+    agent any
+    environment {
+        VENV_DIR = "${WORKSPACE}/venv"
     }
-
-    stage('Install dependencies') {
-      steps {
-                dir('messaging_app') {
-                    sh 'python3.11 -m venv venv'
-                    sh './venv/bin/pip install --upgrade pip'
-                    sh './venv/bin/pip install -r requirements.txt'
-                }
+    stages {
+        stage('Checkout SCM') {
+            steps {
+                git url: 'https://github.com/Y-A-Dawit/alx-backend-python.git', credentialsId: 'github-creds'
             }
-
-    }
-
-    stage('Run tests') {
-      steps {
-                dir('messaging_app') {
-                    sh './venv/bin/pytest --maxfail=1 --disable-warnings -q --junitxml=test-results.xml'
-                }
-            }
-      post {
-        always {
-          // Publish test report; visible under "Test Result"
-          junit 'messaging_app/reports/junit/pytest.xml'
-          // Keep reports as build artifacts
-          archiveArtifacts artifacts: 'messaging_app/reports/**', fingerprint: true
         }
-      }
+
+        stage('Install System Dependencies') {
+            steps {
+                script {
+                    // Install build dependencies in the container
+                    sh '''
+                    apt-get update
+                    apt-get install -y gcc g++ make pkg-config libmariadb-dev libmariadb-dev-compat
+                    '''
+                }
+            }
+        }
+
+        stage('Setup Python Environment') {
+            steps {
+                sh '''
+                python3 -m venv $VENV_DIR
+                source $VENV_DIR/bin/activate
+                pip install --upgrade pip
+                pip install -r messaging_app/requirements.txt
+                '''
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                sh '''
+                source $VENV_DIR/bin/activate
+                pytest --junitxml=report.xml
+                '''
+            }
+            post {
+                always {
+                    junit 'report.xml'
+                }
+            }
+        }
     }
-  }
+    post {
+        always {
+            echo 'Pipeline finished'
+        }
+    }
 }
