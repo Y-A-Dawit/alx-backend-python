@@ -72,7 +72,4 @@ pipeline {
       }
     }
   }
-
-  // No triggers configured -> you trigger manually via "Build Now"
-  triggers { }
 }
