@@ -10,16 +10,9 @@ pipeline {
             }
         }
 
-
         stage('Install System Dependencies') {
             steps {
-                script {
-                    // Install build dependencies in the container
-                    sh '''
-                    apt-get update
-                    apt-get install -y gcc g++ make pkg-config libmariadb-dev libmariadb-dev-compat
-                    '''
-                }
+                sh 'apt-get update && apt-get install -y gcc g++ make pkg-config libmariadb-dev libmariadb-dev-compat'
             }
         }
 
