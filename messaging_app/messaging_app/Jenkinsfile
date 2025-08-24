@@ -1,11 +1,12 @@
 pipeline {
     agent any
 
+    tools {
+        python 'Python3'  // the name you configured in Global Tool Config
+    }
+
     environment {
         PROJECT_DIR = "messaging_app"
-        PYTHON = "python3"
-        PIP = "pip3"
-        VENV_DIR = "venv"
         REPORTS_DIR = "reports"
         TESTS_DIR = "tests"
     }
@@ -13,8 +14,8 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                echo 'Pulling latest code from GitHub...'
-                git branch: 'main', url: 'https://github.com/Y-A-Dawit/alx-backend-python.git', credentialsId: 'github-creds'
+                git branch: 'main', url: 'https://github.com/Y-A-Dawit/alx-backend-python.git',
+                    credentialsId: 'github-creds'
             }
         }
 
@@ -27,30 +28,23 @@ pipeline {
             }
         }
 
-        stage('Set Up Python Environment') {
+        stage('Install Dependencies') {
             steps {
-                sh """
-                    cd ${PROJECT_DIR}
-                    ${PYTHON} -m venv ${VENV_DIR}
-                    ${VENV_DIR}/bin/pip install --upgrade pip
-                    ${VENV_DIR}/bin/pip install -r requirements.txt
-                """
+                python requirements: 'messaging_app/requirements.txt', usePoetry: false
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh """
-                    cd ${PROJECT_DIR}
-                    ${VENV_DIR}/bin/pytest --maxfail=1 --disable-warnings -q \
-                        --junitxml=${REPORTS_DIR}/pytest-report.xml \
-                        --html=${REPORTS_DIR}/report.html --self-contained-html
-                """
+                python command: 'messaging_app/pytest --maxfail=1 --disable-warnings -q \
+                    --junitxml=messaging_app/reports/pytest-report.xml \
+                    --html=messaging_app/reports/report.html --self-contained-html', 
+                    usePoetry: false
             }
             post {
                 always {
                     publishHTML([ 
-                        reportDir: "${PROJECT_DIR}/${REPORTS_DIR}",
+                        reportDir: "messaging_app/reports",
                         reportFiles: "report.html",
                         reportName: "Pytest Report",
                         keepAll: true,
