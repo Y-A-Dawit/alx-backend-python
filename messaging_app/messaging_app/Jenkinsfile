@@ -7,6 +7,9 @@ pipeline {
         VENV_DIR = "venv"
         REPORTS_DIR = "reports"
         TESTS_DIR = "tests"
+        DOCKER_HUB_CREDENTIALS = 'dockerhub-creds' // Jenkins credentials ID
+        IMAGE_NAME = 'your-dockerhub-username/messaging-app'
+        IMAGE_TAG = "latest"
     }
 
     stages {
@@ -20,51 +23,55 @@ pipeline {
 
         stage('Prepare Project Structure') {
             steps {
-                sh "mkdir -p ${PROJECT_DIR}/${REPORTS_DIR} ${PROJECT_DIR}/${TESTS_DIR}"
+                sh "mkdir -p messaging_app/messaging_app/reports messaging_app/messaging_app/tests"
             }
         }
 
-        stage('Set Up Python Environment') {
+        stage('Set Up Python Environment and Run Tests') {
             steps {
-                // ShiningPanda automatically wraps Python in a virtual environment
-                // Using 'withPythonEnv' block
-                withPythonEnv('Python3') {
-                    sh """
-                        pip install --upgrade pip
-                        pip install -r messaging_app/requirements.txt
-                    """
-                }
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
-                withPythonEnv('Python3') {
-                    sh """
+                python('Python3') {
+                    sh 'pip install --upgrade pip'
+                    sh 'pip install -r messaging_app/requirements.txt'
+                    sh '''
                         pytest messaging_app \
-                            --maxfail=1 --disable-warnings -q \
-                            --junitxml=${PROJECT_DIR}/${REPORTS_DIR}/pytest-report.xml \
-                            --html=${PROJECT_DIR}/${REPORTS_DIR}/report.html --self-contained-html
-                    """
-                }
-            }
-            post {
-                always {
-                    publishHTML([
-                        reportDir: "${PROJECT_DIR}/${REPORTS_DIR}",
-                        reportFiles: "report.html",
-                        reportName: "Pytest Report",
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true,
-                        allowMissing: true
-                    ])
+                        --maxfail=1 --disable-warnings -q \
+                        --junitxml=messaging_app/reports/pytest-report.xml \
+                        --html=messaging_app/reports/report.html --self-contained-html
+                    '''
                 }
             }
         }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${IMAGE_NAME}:${IMAGE_TAG}", 'messaging_app')
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'DOCKER_HUB_CREDENTIALS') {
+                        docker.image("${IMAGE_NAME}:${IMAGE_TAG}").push()
+                    }
+                }
+            }
+        }
+
     }
 
     post {
-        success { echo 'Pipeline completed successfully ✅' }
-        failure { echo 'Pipeline failed ❌ — check the Pytest Report' }
+        always {
+            publishHTML([
+                reportDir: 'messaging_app/reports',
+                reportFiles: 'report.html',
+                reportName: 'Pytest Report'
+            ])
+        }
+        failure {
+            echo "Pipeline failed ❌ — check the Pytest Report and build logs"
+        }
     }
 }
