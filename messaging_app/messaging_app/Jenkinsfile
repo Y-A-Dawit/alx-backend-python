@@ -6,6 +6,8 @@ pipeline {
     }
 
     environment {
+        PYTHON = "python3"
+        PIP = "pip3"
         PROJECT_DIR = "messaging_app"
         REPORTS_DIR = "reports"
         TESTS_DIR = "tests"
