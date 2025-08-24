@@ -36,19 +36,17 @@ pipeline {
                 sh """
                     cd messaging_app
                     python3 -m venv venv
-                    . venv/bin/activate
-                    pip install -r requirements.txt
+                    venv/bin/pip install -r requirements.txt
                 """
             }
         }
 
         stage('Run Tests') {
             steps {
-                echo 'Running pytest and generating HTML report...'
+                echo 'Running tests...'
                 sh """
-                    cd ${PROJECT_DIR}
-                    source ${VENV_DIR}/bin/activate
-                    pytest --html=${REPORTS_DIR}/report.html --self-contained-html || true
+                    cd messaging_app
+                    venv/bin/python -m pytest --maxfail=1 --disable-warnings -q --junitxml=reports/pytest-report.xml
                 """
             }
             post {
