@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     tools {
-        python 'Python3.11'  // the name you configured in Global Tool Config
+        python 'python3.11'  // the name you configured in Global Tool Config
     }
 
     environment {
