@@ -14,52 +14,48 @@ pipeline {
         stage('Checkout Code') {
             steps {
                 echo 'Pulling latest code from GitHub...'
-                git branch: 'main', url: 'https://github.com/Y-A-Dawit/alx-backend-python.git',
-                credentialsId: 'github-creds'
+                git branch: 'main', url: 'https://github.com/Y-A-Dawit/alx-backend-python.git', credentialsId: 'github-creds'
             }
         }
 
         stage('Prepare Project Structure') {
             steps {
-                echo 'Ensuring tests and reports directories exist...'
                 sh """
                     cd ${PROJECT_DIR}
-                    mkdir -p ${REPORTS_DIR}
-                    mkdir -p ${TESTS_DIR}
+                    mkdir -p ${REPORTS_DIR} ${TESTS_DIR}
                 """
             }
         }
 
         stage('Set Up Python Environment') {
             steps {
-                echo 'Creating virtual environment and installing dependencies...'
                 sh """
-                    cd messaging_app
-                    python3 -m venv venv
-                    venv/bin/pip install --upgrade pip
-                    venv/bin/pip install -r requirements.txt
+                    cd ${PROJECT_DIR}
+                    ${PYTHON} -m venv ${VENV_DIR}
+                    ${VENV_DIR}/bin/pip install --upgrade pip
+                    ${VENV_DIR}/bin/pip install -r requirements.txt
                 """
             }
         }
 
         stage('Run Tests') {
             steps {
-                echo 'Running tests...'
                 sh """
-                    cd messaging_app
-                    venv/bin/python -m pytest --maxfail=1 --disable-warnings -q --junitxml=reports/pytest-report.xml
+                    cd ${PROJECT_DIR}
+                    ${VENV_DIR}/bin/pytest --maxfail=1 --disable-warnings -q \
+                        --junitxml=${REPORTS_DIR}/pytest-report.xml \
+                        --html=${REPORTS_DIR}/report.html --self-contained-html
                 """
             }
             post {
                 always {
-                    echo 'Publishing test results...'
-                    publishHTML([
-                        allowMissing: true,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
+                    publishHTML([ 
                         reportDir: "${PROJECT_DIR}/${REPORTS_DIR}",
                         reportFiles: "report.html",
-                        reportName: "Pytest Report"
+                        reportName: "Pytest Report",
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true,
+                        allowMissing: true
                     ])
                 }
             }
@@ -67,11 +63,7 @@ pipeline {
     }
 
     post {
-        success {
-            echo 'Pipeline completed successfully ✅'
-        }
-        failure {
-            echo 'Pipeline failed ❌ — check the Pytest Report'
-        }
+        success { echo 'Pipeline completed successfully ✅' }
+        failure { echo 'Pipeline failed ❌ — check the Pytest Report' }
     }
 }
