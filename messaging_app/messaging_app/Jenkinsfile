@@ -2,14 +2,13 @@ pipeline {
     agent any
 
     tools {
-        python 'python3.11'  // the name you configured in Global Tool Config
+        python 'Python3'  // Name exactly as configured in Global Tool Configuration
     }
 
     environment {
-        PYTHON = "python3.11"
         PIP = "pip3" // pip3 install
-        VEN_DIR = "venv"
         PROJECT_DIR = "messaging_app/messaging_app"
+        VENV_DIR = "venv"
         REPORTS_DIR = "reports"
         TESTS_DIR = "tests"
     }
@@ -17,43 +16,46 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/Y-A-Dawit/alx-backend-python.git',
+                git branch: 'main',
+                    url: 'https://github.com/Y-A-Dawit/alx-backend-python.git',
                     credentialsId: 'github-creds'
             }
         }
 
         stage('Prepare Project Structure') {
             steps {
-                sh """
-                    mkdir -p ${PROJECT_DIR}/${REPORTS_DIR} ${PROJECT_DIR}/${TESTS_DIR}
-                """
+                sh "mkdir -p ${PROJECT_DIR}/${REPORTS_DIR} ${PROJECT_DIR}/${TESTS_DIR}"
             }
         }
 
         stage('Set Up Python Environment') {
             steps {
-                sh """
-                    python3 -m venv ${PROJECT_DIR}/${VENV_DIR}
-                    ${PROJECT_DIR}/${VENV_DIR}/bin/pip install --upgrade pip
-                    ${PROJECT_DIR}/${VENV_DIR}/bin/pip install -r ${PROJECT_DIR}/requirements.txt
-                """
+                // ShiningPanda automatically wraps Python in a virtual environment
+                // Using 'withPythonEnv' block
+                withPythonEnv('Python3') {
+                    sh """
+                        pip install --upgrade pip
+                        pip install -r ${PROJECT_DIR}/requirements.txt
+                    """
+                }
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh """
-                    ${PROJECT_DIR}/${VENV_DIR}/bin/python -m pytest \
-                        ${PROJECT_DIR} \
-                        --maxfail=1 --disable-warnings -q \
-                        --junitxml=${PROJECT_DIR}/${REPORTS_DIR}/pytest-report.xml \
-                        --html=${PROJECT_DIR}/${REPORTS_DIR}/report.html --self-contained-html
-                """
+                withPythonEnv('Python3') {
+                    sh """
+                        pytest ${PROJECT_DIR} \
+                            --maxfail=1 --disable-warnings -q \
+                            --junitxml=${PROJECT_DIR}/${REPORTS_DIR}/pytest-report.xml \
+                            --html=${PROJECT_DIR}/${REPORTS_DIR}/report.html --self-contained-html
+                    """
+                }
             }
             post {
                 always {
-                    publishHTML([ 
-                        reportDir: "messaging_app/reports",
+                    publishHTML([
+                        reportDir: "${PROJECT_DIR}/${REPORTS_DIR}",
                         reportFiles: "report.html",
                         reportName: "Pytest Report",
                         keepAll: true,
