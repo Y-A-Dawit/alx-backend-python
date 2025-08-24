@@ -8,7 +8,8 @@ pipeline {
     environment {
         PYTHON = "python3.11"
         PIP = "pip3" // pip3 install
-        PROJECT_DIR = "messaging_app"
+        VEN_DIR = "venv"
+        PROJECT_DIR = "messaging_app/messaging_app"
         REPORTS_DIR = "reports"
         TESTS_DIR = "tests"
     }
@@ -24,24 +25,30 @@ pipeline {
         stage('Prepare Project Structure') {
             steps {
                 sh """
-                    cd ${PROJECT_DIR}
-                    mkdir -p ${REPORTS_DIR} ${TESTS_DIR}
+                    mkdir -p ${PROJECT_DIR}/${REPORTS_DIR} ${PROJECT_DIR}/${TESTS_DIR}
                 """
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Set Up Python Environment') {
             steps {
-                python requirements: 'messaging_app/requirements.txt', usePoetry: false
+                sh """
+                    python3 -m venv ${PROJECT_DIR}/${VENV_DIR}
+                    ${PROJECT_DIR}/${VENV_DIR}/bin/pip install --upgrade pip
+                    ${PROJECT_DIR}/${VENV_DIR}/bin/pip install -r ${PROJECT_DIR}/requirements.txt
+                """
             }
         }
 
         stage('Run Tests') {
             steps {
-                python command: 'messaging_app/pytest --maxfail=1 --disable-warnings -q \
-                    --junitxml=messaging_app/reports/pytest-report.xml \
-                    --html=messaging_app/reports/report.html --self-contained-html', 
-                    usePoetry: false
+                sh """
+                    ${PROJECT_DIR}/${VENV_DIR}/bin/python -m pytest \
+                        ${PROJECT_DIR} \
+                        --maxfail=1 --disable-warnings -q \
+                        --junitxml=${PROJECT_DIR}/${REPORTS_DIR}/pytest-report.xml \
+                        --html=${PROJECT_DIR}/${REPORTS_DIR}/report.html --self-contained-html
+                """
             }
             post {
                 always {
