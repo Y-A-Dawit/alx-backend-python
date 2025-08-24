@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         PYTHON = "python3"
-        PIP = "pip3"
+        PIP = "pip3" // pip3 install
         PROJECT_DIR = "messaging_app"
         REPORTS_DIR = "reports"
         TESTS_DIR = "tests"
