@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        python 'Python3'  // Name exactly as configured in Global Tool Configuration
-    }
-
     environment {
         PIP = "pip3" // pip3 install
         PROJECT_DIR = "messaging_app/messaging_app"
@@ -35,7 +31,7 @@ pipeline {
                 withPythonEnv('Python3') {
                     sh """
                         pip install --upgrade pip
-                        pip install -r ${PROJECT_DIR}/requirements.txt
+                        pip install -r messaging_app/requirements.txt
                     """
                 }
             }
@@ -45,7 +41,7 @@ pipeline {
             steps {
                 withPythonEnv('Python3') {
                     sh """
-                        pytest ${PROJECT_DIR} \
+                        pytest messaging_app \
                             --maxfail=1 --disable-warnings -q \
                             --junitxml=${PROJECT_DIR}/${REPORTS_DIR}/pytest-report.xml \
                             --html=${PROJECT_DIR}/${REPORTS_DIR}/report.html --self-contained-html
