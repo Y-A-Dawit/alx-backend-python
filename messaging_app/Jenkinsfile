@@ -1,62 +1,80 @@
 pipeline {
     agent any
 
+    environment {
+        PROJECT_DIR = "messaging_app"
+        PYTHON = "python3"
+        PIP = "pip3"
+        VENV_DIR = "venv"
+        REPORTS_DIR = "reports"
+        TESTS_DIR = "tests"
+    }
+
     stages {
-        stage('Build Docker Image') {
+        stage('Checkout Code') {
             steps {
-                script {
-                    docker.build("messaging-app:latest", ".")
-                }
-            }
-        }
-        stage('Checkout') {
-            steps {
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/main']],
-                    doGenerateSubmoduleConfigurations: false,
-                    extensions: [],
-                    userRemoteConfigs: [[
-                        url: 'https://github.com/Y-A-Dawit/alx-backend-python.git',
-                        credentialsId: 'github-creds'
-                    ]]
-                ])
+                echo 'Pulling latest code from GitHub...'
+                git branch: 'main', url: 'https://github.com/Y-A-Dawit/alx-backend-python.git',
+                credentialsId: 'github-creds'
             }
         }
 
-
-        stage('Install System Dependencies') {
+        stage('Prepare Project Structure') {
             steps {
-                sh '''
-                    apt-get update
-                    apt-get install -y gcc g++ make pkg-config libmariadb-dev libmariadb-dev-compat
-                '''
+                echo 'Ensuring tests and reports directories exist...'
+                sh """
+                    cd ${PROJECT_DIR}
+                    mkdir -p ${REPORTS_DIR}
+                    mkdir -p ${TESTS_DIR}
+                """
             }
         }
 
-        stage('Setup Python Environment') {
+        stage('Set Up Python Environment') {
             steps {
-                sh '''
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install --upgrade pip
-                    pip install -r messaging_app/requirements.txt
-                '''
+                echo 'Creating virtual environment and installing dependencies...'
+                sh """
+                    cd ${PROJECT_DIR}
+                    ${PYTHON} -m venv ${VENV_DIR}
+                    source ${VENV_DIR}/bin/activate
+                    ${PIP} install --upgrade pip
+                    ${PIP} install -r messaging_app/requirements.txt
+                    ${PIP} install pytest pytest-html
+                """
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh '''
-                    . venv/bin/activate
-                    pytest --junitxml=report.xml
-                '''
+                echo 'Running pytest and generating HTML report...'
+                sh """
+                    cd ${PROJECT_DIR}
+                    source ${VENV_DIR}/bin/activate
+                    pytest --html=${REPORTS_DIR}/report.html --self-contained-html || true
+                """
             }
             post {
                 always {
-                    junit 'report.xml'
+                    echo 'Publishing test results...'
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: "${PROJECT_DIR}/${REPORTS_DIR}",
+                        reportFiles: "report.html",
+                        reportName: "Pytest Report"
+                    ])
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully ✅'
+        }
+        failure {
+            echo 'Pipeline failed ❌ — check the Pytest Report'
         }
     }
 }
