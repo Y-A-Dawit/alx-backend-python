@@ -2,11 +2,11 @@ pipeline {
     agent any
 
     tools {
-        python 'Python3'  // the name you configured in Global Tool Config
+        python 'Python3.11'  // the name you configured in Global Tool Config
     }
 
     environment {
-        PYTHON = "python3"
+        PYTHON = "python3.11"
         PIP = "pip3" // pip3 install
         PROJECT_DIR = "messaging_app"
         REPORTS_DIR = "reports"
