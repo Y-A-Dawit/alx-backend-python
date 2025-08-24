@@ -34,12 +34,10 @@ pipeline {
             steps {
                 echo 'Creating virtual environment and installing dependencies...'
                 sh """
-                    cd ${PROJECT_DIR}
-                    ${PYTHON} -m venv ${VENV_DIR}
-                    source ${VENV_DIR}/bin/activate
-                    ${PIP} install --upgrade pip
-                    ${PIP} install -r messaging_app/requirements.txt
-                    ${PIP} install pytest pytest-html
+                    cd messaging_app
+                    python3 -m venv venv
+                    . venv/bin/activate
+                    pip install -r requirements.txt
                 """
             }
         }
